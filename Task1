@@ -1,0 +1,153 @@
+module top (clk,data_out,data_in,write,read,rst,check_data,adr,start,out,index);
+ output [10:0]index;
+input clk,rst;
+input [31:0] data_in;
+input [31:0] check_data;
+input write,read;
+  input  [10:0] adr;
+input start;
+output  [31:0] data_out;
+output out;
+
+
+  memory dump1 (clk, data_out, data_in,write,read,rst,check_data,adr,start,out,index);
+
+
+endmodule
+
+
+
+
+
+module memory(clk, data_out, data_in, write,read,rst,check_data,adr,start,out,index);
+input clk,rst;
+  output reg [10:0]index;
+input [31:0] data_in;
+input [31:0] check_data;
+input write,read;
+input  [10:0] adr;
+output reg [31:0] data_out;
+reg [7:0] p,q,r,s;
+reg [31:0] mem[1023:0];
+input start;
+output reg out;
+reg [10:0]over_flow;
+integer i;
+reg [10:0]j;
+
+// initialization of the memory
+initial
+begin
+out=0;
+j=0;
+over_flow=0;
+  for(i=0;i<1024;i=i+1)
+begin
+p=$urandom_range(33,127);
+q=$urandom_range(33,127);
+r=$urandom_range(33,127);
+s=$urandom_range(33,127);
+mem[i]={p,q,r,s};
+end
+end
+
+//Reading and writing into memory
+
+always @(posedge clk)
+begin
+ 
+if(rst)
+begin
+data_out=0;
+end
+ 
+if(write && !read )
+mem[adr]=data_in;
+
+if(read && !write )
+data_out=mem[adr];
+ 
+end
+
+//checking for a perticular value in a memory  
+always @(posedge clk)
+begin
+
+if(start)
+begin
+ 
+if(j==1024)
+begin
+out=1;
+over_flow=1024;
+end
+ 
+else if(check_data==mem[j])
+begin
+out=1;
+index=j;
+//$display("%s",mem[j]);
+//$display("%d",j);
+end
+ 
+else
+begin
+j=j+1;
+end
+ 
+end
+ 
+end
+ 
+endmodule
+
+
+// test bench
+module tb;
+
+reg clk,rst;
+reg [31:0] data_in;
+reg [31:0] check_data;
+reg write,read;
+reg  [10:0] adr;
+reg start;
+wire [31:0] data_out;
+wire out;
+  wire [10:0]index;
+
+  top t1 (clk,data_out,data_in,write,read,rst,check_data,adr,start,out,index);
+initial
+begin
+$dumpvars;
+$dumpfile("tb.vcd");
+end
+
+initial
+begin
+rst=1'b0;
+clk=1'b0;
+adr=45;
+data_in=4567;
+write=1'b1;
+read=1'b0;
+#5
+write=1'b0;
+read=1;
+check_data=4567;
+#5
+start=1'b1;
+end
+ 
+initial
+  begin
+    $display("%d,",out);
+  #2000;  $finish;
+  end
+ 
+always #1 clk=~clk;
+endmodule
+
+
+
+
+ 
