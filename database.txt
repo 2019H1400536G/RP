@@ -1,0 +1,110 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct list{
+    char string[20];
+    int value;
+};
+
+struct list list1[1000];
+
+int hashfunction(char *string)
+{
+    int len,key;
+    int index;
+    long int value=1;
+    len=strlen(string);
+    for(int i=0;i<len;i++)
+    {
+        value=value*string[i]+value;
+    }
+    index=value%1000;
+    return index;
+}
+
+
+void insert(char *string1,int val)
+{
+    int index_hash;
+   
+    index_hash=hashfunction(string1);
+   
+    if(list1[index_hash].value==0)
+    {
+        strcpy(list1[index_hash].string,string1);
+        list1[index_hash].value=val;
+       
+    }
+   
+}
+
+int search_hash(char *str)
+{
+    int index=hashfunction(str);
+   
+    if(!strcmp(list1[index].string,str))
+    return index;
+   
+    else
+    return -1;
+}
+
+int delete_hash(char *str)
+{
+
+int index=hashfunction(str);
+if(list1[index].value==0)
+return -1;
+else
+{
+strcpy(list1[index].string,"\0");
+list1[index].value=0;
+return 0;
+}
+}
+
+
+int main()
+{
+    int choice;
+    int index;
+    char str1[20];
+    insert("muthu",45);
+    insert("abc",55);
+    insert("abcdefg",78);
+    insert("hello mirchi",99);
+   
+    while(1)
+{
+    printf("enter the choice\n1.search\n2.delete:");
+    scanf("%d",&choice);      
+   
+    if(choice==1)
+    {
+    printf("enter the key\n");
+    scanf("%s",str1);
+    index=search_hash(str1);
+   
+   if(index==-1)
+   printf("the key which you entered is not there in the list\n");
+   else
+   printf("the value of the key is:%d\n",list1[index].value);
+    }
+    else if(choice==2)
+    {
+       
+    printf("enter the key\n");
+    scanf("%s",str1);
+    index=delete_hash(str1);
+    if(index==-1)
+    printf("Element no present in the hash\n");
+    else
+    printf("the element got deleted\n");
+    }
+   
+   
+}
+    return 0;
+   
+}
