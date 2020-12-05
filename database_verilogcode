@@ -1,0 +1,123 @@
+main module :
+
+module hash(clk,rst,in_string,len,ind,op,in_value,out_value);
+input clk;  
+input rst;
+input [1:0]op;
+input [4:0]in_value;
+input [7:0]in_string;
+input [3:0]len;
+
+output reg [4:0]out_value;  
+output  [9:0]ind;
+  
+reg [7:0]str[9:0];
+reg [3:0]string_len;    
+integer k,i;
+reg [63:0] hash_value;
+reg [4:0]mem[999:0];
+reg flag;
+  
+  //string length calibration
+  
+  always  @(posedge clk)
+    begin
+      
+      if(rst)
+        begin
+        k=0;
+        flag=0;
+        string_len=len;           
+        end
+      
+   else
+        begin
+          if(string_len!=4'b0)
+           begin
+             str[k]=in_string;
+             k=k+1;
+             string_len=string_len-1;
+           end
+        end
+    end
+  
+  //hash value generation    
+  
+      always @(posedge clk)
+        begin
+          if(rst)
+            begin
+            hash_value=1;
+             // ind=10'b0;
+            i=0;
+            end
+          else
+            begin
+              if(string_len==4'b0)
+              begin
+                if(i!=len)
+                begin  
+                hash_value=hash_value*str[i]+hash_value;
+                i=i+1;
+                end
+                if(i==len)
+                  begin
+                //  ind=hash_value % 1000;
+                  flag=1;
+                   
+                  end
+              end
+            end
+        end
+        
+         div_gen_0 inst (
+                             .aclk(clk),                                      // input wire aclk
+                             .s_axis_divisor_tvalid(1),    // input wire s_axis_divisor_tvalid
+                             .s_axis_divisor_tdata(1000),      // input wire [15 : 0] s_axis_divisor_tdata
+                             .s_axis_dividend_tvalid(flag),  // input wire s_axis_dividend_tvalid
+                             .s_axis_dividend_tdata(hash_value),    // input wire [63 : 0] s_axis_dividend_tdata
+                             .m_axis_dout_tvalid(m_axis_dout_tvalid),          // output wire m_axis_dout_tvalid
+                             .m_axis_dout_tdata(ind)            // output wire [79 : 0] m_axis_dout_tdata
+                           );
+          
+  
+  
+  //operations section
+  
+  
+          always @(posedge clk)
+            begin
+              if(!rst)
+              begin
+              case(op)
+                
+                2'b00:begin //insert
+                  mem[ind]=in_value;                  
+                end
+                
+                2'b01:begin
+                  out_value=mem[ind];
+                end
+                
+                2'b11:begin
+                  mem[ind]=5'b0;
+                  end
+                
+              endcase
+              end
+              
+            end
+endmodule
+
+
+
+XDC file :
+
+set_property PACKAGE_PIN R18 [get_ports rst]
+set_property IOSTANDARD LVCMOS33 [get_ports rst]
+
+
+set_property PACKAGE_PIN  Y9 [get_ports clk]
+set_property IOSTANDARD LVCMOS33 [get_ports clk]
+
+create_clock -period 15 [get_ports clk]
